@@ -22,7 +22,7 @@ APP_ROOT="$APP_PATH/current"
 SOCKET_PATH="$APP_PATH/shared/sockets"
 
 DAEMON_OPTS="-C $APP_ROOT/config/puma.rb -e production"
-WEB_SERVER_SOCKET_PATH="$SOCKET_PATH/puma.socket"
+WEB_SERVER_SOCKET_PATH="$SOCKET_PATH/puma.sock"
 WEB_SERVER_STATE_PATH="$SOCKET_PATH/puma.state"
 
 STOP_APP="bundle exec pumactl -S $WEB_SERVER_STATE_PATH stop"
@@ -34,14 +34,14 @@ NAME="app"
 DESC="Application service"
 
 ## END YOUR SETTING
+PID=`ps aux | grep $WEB_SERVER_SOCKET_PATH | grep -v grep |  awk '{ print $2 }'` 
 
 check_pid(){
-  if [ -f $WEB_SERVER_SOCKET_PATH ]; then
-    PID=`ps aux | grep $WEB_SERVER_SOCKET_PATH | grep -v grep | awk '{ print $2 }'`
+  if [ "$PID" -ne 0 ]; then
     STATUS=`ps aux | grep $PID | grep -v grep | wc -l`
   else
-    STATUS=0
     PID=0
+    STATUS=0
   fi
 }
 

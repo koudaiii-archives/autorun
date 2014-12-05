@@ -26,7 +26,9 @@ WEB_SERVER_SOCKET_PATH="$SOCKET_PATH/puma.socket"
 WEB_SERVER_STATE_PATH="$SOCKET_PATH/puma.state"
 
 STOP_APP="RAILS_ENV=production bundle exec pumactl -S $WEB_SERVER_STATE_PATH stop"
+STOP_DELAYED_JOB="RAILS_ENV=production bin/delayed_job stop"
 START_APP="RAILS_ENV=production bundle exec pumactl start -q -d -S $WEB_SERVER_STATE_PATH $DAEMON_OPTS"
+START_DELAYED_JOB="RAILS_ENV=production bin/delayed_job start"
 
 NAME="app"
 DESC="Application service"
@@ -53,6 +55,7 @@ start() {
   else
     if [ `whoami` = root ]; then
       sudo -u $APP_USER -H bash -l -c "$START_APP"
+      sudo -u $APP_USER -H bash -l -c "$START_DELAYED_JOB"
       echo "$DESC started"
     fi
   fi
@@ -64,6 +67,7 @@ stop() {
   if [ "$PID" -ne 0 -a "$STATUS" -ne 0 ]; then
     ## Program is running, stop it.
     sudo -u $APP_USER -H bash -l -c "$STOP_APP  > /dev/null  2>&1 &"
+    sudo -u $APP_USER -H bash -l -c "$STOP_DELAYED_JOB  > /dev/null  2>&1 &"
     echo "$DESC stopped"
   else
     ## Program is not running, exit with error.
@@ -78,8 +82,10 @@ restart() {
   if [ "$PID" -ne 0 -a "$STATUS" -ne 0 ]; then
     echo "Restarting $DESC..."
     sudo -u $APP_USER -H bash -l -c "$STOP_APP  > /dev/null  2>&1 &"
+    sudo -u $APP_USER -H bash -l -c "$STOP_DELAYED_JOB  > /dev/null  2>&1 &"
     if [ `whoami` = root ]; then
       sudo -u $APP_USER -H bash -l -c "$START_APP  > /dev/null  2>&1 &"
+      sudo -u $APP_USER -H bash -l -c "$START_DELAYED_JOB  > /dev/null  2>&1 &"
     fi
     echo "$DESC restarted."
   else

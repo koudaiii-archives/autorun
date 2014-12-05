@@ -25,9 +25,9 @@ DAEMON_OPTS="-C $APP_ROOT/config/puma.rb -e production"
 WEB_SERVER_SOCKET_PATH="$SOCKET_PATH/puma.socket"
 WEB_SERVER_STATE_PATH="$SOCKET_PATH/puma.state"
 
-STOP_APP="RAILS_ENV=production bundle exec pumactl -S $WEB_SERVER_STATE_PATH stop"
+STOP_APP="bundle exec pumactl -S $WEB_SERVER_STATE_PATH stop"
 STOP_DELAYED_JOB="RAILS_ENV=production bin/delayed_job stop"
-START_APP="RAILS_ENV=production bundle exec pumactl start -q -d -S $WEB_SERVER_STATE_PATH $DAEMON_OPTS"
+START_APP="bundle exec pumactl start -q -d -S $WEB_SERVER_STATE_PATH $DAEMON_OPTS"
 START_DELAYED_JOB="RAILS_ENV=production bin/delayed_job start"
 
 NAME="app"

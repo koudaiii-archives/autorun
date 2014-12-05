@@ -126,7 +126,7 @@ case "$1" in
         status
         ;;
   *)
-        echo "Usage: sudo service gitlab {start|stop|restart}" >&2
+        echo "Usage: sudo service app {start|stop|restart}" >&2
         exit 1
         ;;
 esac

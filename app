@@ -16,22 +16,26 @@
 
 ### BEGIN YOUR SETTING
 APP_USER="app"
-APP_ROOT="/var/www/app"
-SOCKET_PATH="$APP_ROOT/shared/sockets/"
+APP_PATH="/var/www/app"
 
-DAEMON_OPTS="-C $APP_ROOT/current/config/puma.rb -e production"
+APP_ROOT="$APP_PATH/current"
+SOCKET_PATH="$APP_PATH/shared/sockets"
+
+DAEMON_OPTS="-C $APP_ROOT/config/puma.rb -e production"
 WEB_SERVER_SOCKET_PATH="$SOCKET_PATH/puma.socket"
 WEB_SERVER_STATE_PATH="$SOCKET_PATH/puma.state"
 
 STOP_APP="RAILS_ENV=production bundle exec pumactl -S $WEB_SERVER_STATE_PATH stop"
 START_APP="RAILS_ENV=production bundle exec pumactl start -q -d -S $WEB_SERVER_STATE_PATH $DAEMON_OPTS"
+
 NAME="app"
-DESC="app service"
+DESC="Application service"
+
 ## END YOUR SETTING
 
 check_pid(){
-  if [ -f $WEB_SERVER_PID ]; then
-    PID=`cat $WEB_SERVER_PID`
+  if [ -f $WEB_SERVER_SOCKET_PATH ]; then
+    PID=$WEB_SERVER_SOCKET_PATH
     STATUS=`ps aux | grep $PID | grep -v grep | wc -l`
   else
     STATUS=0
@@ -48,8 +52,7 @@ start() {
     exit 1
   else
     if [ `whoami` = root ]; then
-      sudo -u git -H bash -l -c "RAILS_ENV=production bundle exec puma $DAEMON_OPTS"
-      sudo -u git -H bash -l -c "mkdir -p $PID_PATH && $START_SIDEKIQ  > /dev/null  2>&1 &"
+      sudo -u $APP_USER -H bash -l -c "$START_APP"
       echo "$DESC started"
     fi
   fi
@@ -60,9 +63,7 @@ stop() {
   check_pid
   if [ "$PID" -ne 0 -a "$STATUS" -ne 0 ]; then
     ## Program is running, stop it.
-    kill -QUIT `cat $WEB_SERVER_PID`
-    sudo -u git -H bash -l -c "mkdir -p $PID_PATH && $STOP_SIDEKIQ  > /dev/null  2>&1 &"
-    rm "$WEB_SERVER_PID" >> /dev/null
+    sudo -u $APP_USER -H bash -l -c "$STOP_APP  > /dev/null  2>&1 &"
     echo "$DESC stopped"
   else
     ## Program is not running, exit with error.
@@ -76,10 +77,9 @@ restart() {
   check_pid
   if [ "$PID" -ne 0 -a "$STATUS" -ne 0 ]; then
     echo "Restarting $DESC..."
-    kill -USR2 `cat $WEB_SERVER_PID`
-    sudo -u git -H bash -l -c "mkdir -p $PID_PATH && $STOP_SIDEKIQ  > /dev/null  2>&1 &"
+    sudo -u $APP_USER -H bash -l -c "$STOP_APP  > /dev/null  2>&1 &"
     if [ `whoami` = root ]; then
-      sudo -u git -H bash -l -c "mkdir -p $PID_PATH && $START_SIDEKIQ  > /dev/null  2>&1 &"
+      sudo -u $APP_USER -H bash -l -c "$START_APP  > /dev/null  2>&1 &"
     fi
     echo "$DESC restarted."
   else
@@ -116,16 +116,11 @@ case "$1" in
   restart)
         restart
         ;;
-  reload|force-reload)
-        echo -n "Reloading $NAME configuration: "
-        kill -HUP `cat $PID`
-        echo "done."
-        ;;
   status)
         status
         ;;
   *)
-        echo "Usage: sudo service gitlab {start|stop|restart|reload}" >&2
+        echo "Usage: sudo service gitlab {start|stop|restart}" >&2
         exit 1
         ;;
 esac

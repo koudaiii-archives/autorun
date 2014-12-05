@@ -37,7 +37,7 @@ DESC="Application service"
 
 check_pid(){
   if [ -f $WEB_SERVER_SOCKET_PATH ]; then
-    PID=$WEB_SERVER_SOCKET_PATH
+    PID=`ps aux | grep $WEB_SERVER_SOCKET_PATH | grep -v grep | awk '{ print $2 }'`
     STATUS=`ps aux | grep $PID | grep -v grep | wc -l`
   else
     STATUS=0

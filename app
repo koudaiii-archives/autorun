@@ -37,7 +37,7 @@ DESC="Application service"
 PID=`ps aux | grep $WEB_SERVER_SOCKET_PATH | grep -v grep |  awk '{ print $2 }'` 
 
 check_pid(){
-  if [ "$PID" -ne 0 ]; then
+  if [ -n "$PID" ]; then
     STATUS=`ps aux | grep $PID | grep -v grep | wc -l`
   else
     PID=0
@@ -68,6 +68,7 @@ stop() {
     ## Program is running, stop it.
     sudo -u $APP_USER -H bash -l -c "$STOP_APP  > /dev/null  2>&1 &"
     sudo -u $APP_USER -H bash -l -c "$STOP_DELAYED_JOB  > /dev/null  2>&1 &"
+    sleep 15s
     echo "$DESC stopped"
   else
     ## Program is not running, exit with error.
@@ -83,9 +84,12 @@ restart() {
     echo "Restarting $DESC..."
     sudo -u $APP_USER -H bash -l -c "$STOP_APP  > /dev/null  2>&1 &"
     sudo -u $APP_USER -H bash -l -c "$STOP_DELAYED_JOB  > /dev/null  2>&1 &"
+    sleep 15s
+    echo "$DESC stopped"
     if [ `whoami` = root ]; then
       sudo -u $APP_USER -H bash -l -c "$START_APP  > /dev/null  2>&1 &"
       sudo -u $APP_USER -H bash -l -c "$START_DELAYED_JOB  > /dev/null  2>&1 &"
+      echo "$DESC started"
     fi
     echo "$DESC restarted."
   else
